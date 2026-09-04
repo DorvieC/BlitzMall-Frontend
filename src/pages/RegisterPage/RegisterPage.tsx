@@ -88,10 +88,8 @@ export default function RegisterPage() {
 
     try {
       const response = await authApi.register({
-        firstName: form.firstName,
-        lastName: form.lastName,
+        name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
-        phone: form.phone || undefined,
         password: form.password,
         confirmPassword: form.confirmPassword,
       });
