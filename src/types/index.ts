@@ -1,11 +1,12 @@
 export interface User {
   id: number;
-  firstName: string;
-  lastName: string;
+  name?: string;
+  status?: string;
   email: string;
   phone?: string;
   roleId: number;
-  roleName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
@@ -19,10 +20,8 @@ export interface LoginDto {
 }
 
 export interface RegisterDto {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
-  phone?: string;
   password: string;
   confirmPassword: string;
 }
@@ -41,14 +40,14 @@ export interface Product {
   categoryId?: number;
   categoryName?: string;
   sellerId?: number;
+  quantity?: number;
   badge?: string;
 }
 
 export interface CartItem {
   id: number;
+  cartId: number;
   productId: number;
-  productName: string;
-  productImageUrl?: string;
   quantity: number;
   unitPrice: number;
 }
