@@ -1,0 +1,229 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4b5563;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.backArrow {
+  font-size: 18px;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 40px;
+  background: #f3f6f3;
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.title {
+  font-size: 26px;
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.imageWrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+
+.discountBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #f97316;
+  color: white;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.savedBadge {
+  display: inline-block;
+  margin-top: 12px;
+  background: #f97316;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.specs {
+  margin-top: 24px;
+}
+
+.specs h3 {
+  font-size: 14px;
+  color: #6b7280;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.specRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+}
+
+.specLabel {
+  color: #6b7280;
+}
+
+.specValue {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.description {
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.price {
+  font-size: 32px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.oldPrice {
+  font-size: 20px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.badge {
+  background: #f97316;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.qtyControl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.qtyControl button {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.addToCart {
+  background: #15803d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.favBtn {
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.delivery {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #4b5563;
+  font-size: 14px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
+  margin-bottom: 12px;
+}
+
+.logo {
+  height: 48px;
+  width: auto;
+  display: block;
+}
+
+.langSwitch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.globeIcon {
+  font-size: 18px;
+}
+
+.stateMsg {
+  padding: 60px 24px;
+  text-align: center;
+  color: #4b5563;
+  font-size: 16px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 12px;
+  color: #15803d;
+  font-weight: 600;
+  text-decoration: none;
+}

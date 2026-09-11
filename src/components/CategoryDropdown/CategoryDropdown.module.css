@@ -1,0 +1,56 @@
+.dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  min-width: 240px;
+  z-index: 300;
+  pointer-events: auto;
+}
+
+.dropdownTitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+
+.dropdownCard {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dropdownLink {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.35;
+  color: #1a1a1a;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.dropdownLink:hover {
+  color: #0a4329;
+}
+
+@media (max-width: 1280px) {
+  .dropdownTitle,
+  .dropdownLink {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .dropdown {
+    display: none;
+  }
+}
