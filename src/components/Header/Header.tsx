@@ -96,12 +96,12 @@ export default function Header({ full = true }: HeaderProps) {
             onMouseEnter={() => setHoveredTab(ALL_CATEGORIES.id)}
             onMouseLeave={() => setHoveredTab(null)}
           >
-            <button type="button" className={styles.catAllBtn}>
-              {ALL_CATEGORIES.name}
-            </button>
-            {hoveredTab === ALL_CATEGORIES.id && (
-              <CategoryDropdown category={ALL_CATEGORIES} />
-            )}
+            <Link to="/categories" className={styles.catAllBtn}>
+    {ALL_CATEGORIES.name}
+  </Link>
+  {hoveredTab === ALL_CATEGORIES.id && (
+    <CategoryDropdown category={ALL_CATEGORIES} />
+  )}
           </div>
 
           {CATEGORIES.map((cat) => (
