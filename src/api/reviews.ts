@@ -1,19 +1,5 @@
 import apiClient from './client';
-
-export interface Review {
-  id: number;
-  productId: number;
-  userId: number;
-  rating: number;
-  comment?: string;
-  createdAt: string;
-}
-
-export interface CreateReviewDto {
-  productId: number;
-  rating: number;
-  comment?: string;
-}
+import type { Review, CreateReviewDto } from '../types';
 
 export const reviewsApi = {
   getByProduct: async (productId: number): Promise<Review[]> => {
@@ -21,8 +7,18 @@ export const reviewsApi = {
     return data;
   },
 
+  getAll: async (): Promise<Review[]> => {
+    const { data } = await apiClient.get<Review[]>('/review');
+    return data;
+  },
+
   create: async (dto: CreateReviewDto): Promise<Review> => {
     const { data } = await apiClient.post<Review>('/review', dto);
+    return data;
+  },
+
+  update: async (id: number, dto: Partial<CreateReviewDto>): Promise<Review> => {
+    const { data } = await apiClient.put<Review>(`/review/${id}`, dto);
     return data;
   },
 

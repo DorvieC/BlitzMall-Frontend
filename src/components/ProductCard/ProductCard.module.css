@@ -1,3 +1,9 @@
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 .card {
   background: var(--color-card);
   border-radius: var(--radius-md);

@@ -2,8 +2,8 @@
   background: #ffffff;
   position: sticky;
   top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  z-index: 1000;
+  overflow: visible;
 }
 
 .topBar {
@@ -38,7 +38,6 @@
   border: 1px solid rgba(0,0,0,0.46);
   border-radius: 20px;
   display: flex;
-  overflow: hidden;
 }
 
 .searchInput {
@@ -63,14 +62,15 @@
   width: 95px;
   height: 65px;
   background: #0a4329;
-  border-radius: 0 20px 20px 0;
-  box-shadow: 0px 4px 4px rgba(0,0,0,0.25);
+  border-radius: 20px;
+  box-shadow: 0px 4px 4px rgba(0,0,0,0.25), inset 0px 4px 4px rgba(0,0,0,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   border: none;
   cursor: pointer;
+  margin: -1px;
 }
 
 .searchBtn img {
@@ -82,7 +82,7 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 42px;
   margin-left: auto;
 }
 
@@ -96,15 +96,15 @@
 }
 
 .deliveryIcon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 
 .deliveryLabel {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   color: #16281d;
   white-space: nowrap;
@@ -120,14 +120,14 @@
 }
 
 .langIcon {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 }
 
 .langText {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1;
   color: #323f37;
   white-space: nowrap;
@@ -185,20 +185,25 @@
 .catNav {
   max-width: 1980px;
   margin: 0 auto;
-  padding: 0 24px;
-  height: 42px;
+  padding: 14px 24px 14px;
+  height: auto;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 32px;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  overflow-x: auto;
-  overflow-y: hidden;
+  /* overflow must stay visible so absolute-positioned dropdowns
+     are not clipped. catNav is hidden on mobile (display:none @900px)
+     so no need for horizontal scrolling. */
+  overflow: visible;
   scrollbar-width: none;
+  position: relative;
+  z-index: 1000;
 }
 .catNav::-webkit-scrollbar { display: none; }
 
 .catAllBtn {
+  position: relative;
   width: 181px;
   height: 42px;
   background: #0a4329;
@@ -218,15 +223,21 @@
 
 .catLinks {
   display: flex;
-  gap: 32px;
+  gap: 46px;
   align-items: center;
   flex-shrink: 0;
+}
+
+.catTab {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .catLink {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: #323f37;
   white-space: nowrap;
   cursor: pointer;
