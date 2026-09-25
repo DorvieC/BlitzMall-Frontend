@@ -1,6 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { CATEGORIES, ALL_CATEGORIES } from '../../data/categories';
+import { CategoryDropdown } from '../CategoryDropdown/CategoryDropdown';
 import styles from './Header.module.css';
 
 import searchIcon   from '../../assets/icons/search.svg';
@@ -10,28 +13,31 @@ import accountIcon  from '../../assets/icons/account.svg';
 import cartIcon     from '../../assets/icons/cart.svg';
 import logoImg      from '../../assets/images/logo-full.png';
 
-const CATEGORIES = [
-  'Електроніка',
-  'Дім і кухня',
-  'Одяг і взуття',
-  "Краса і здовов'я",
-  'Спорт і відпочинок',
-  'Дитячі товари',
-  'Зоотовари',
-];
-
 interface HeaderProps {
   full?: boolean;
 }
 
 export default function Header({ full = true }: HeaderProps) {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { itemCount } = useCart();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setHoveredTab(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) navigate(`/?search=${encodeURIComponent(query)}`);
+    if (query.trim()) navigate(`/catalog?q=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -70,26 +76,50 @@ export default function Header({ full = true }: HeaderProps) {
           <span className={styles.currency}>₴</span>
 
           {isAuthenticated ? (
-            <img src={accountIcon} alt="Акаунт" className={styles.accountIcon} onClick={logout} />
+            <Link to="/profile">
+              <img src={accountIcon} alt="Профіль" className={styles.accountIcon} />
+            </Link>
           ) : (
             <Link to="/login">
-              <img src={accountIcon} alt="Акаунт" className={styles.accountIcon} />
+              <img src={accountIcon} alt="Увійти" className={styles.accountIcon} />
             </Link>
           )}
 
           <Link to="/cart" className={styles.cartWrap}>
             <img src={cartIcon} alt="Кошик" className={styles.cartIcon} />
-            <span className={styles.cartBadge}>0</span>
+            {itemCount > 0 && (
+              <span className={styles.cartBadge}>{itemCount > 99 ? '99+' : itemCount}</span>
+            )}
           </Link>
         </div>
       </div>
 
       {full && (
-        <nav className={styles.catNav}>
-          <button className={styles.catAllBtn}>Усі категорії</button>
+        <nav ref={navRef} className={styles.catNav}>
+          <div
+            className={styles.catTab}
+            onMouseEnter={() => setHoveredTab(ALL_CATEGORIES.id)}
+            onMouseLeave={() => setHoveredTab(null)}
+          >
+            <button type="button" className={styles.catAllBtn}>
+              {ALL_CATEGORIES.name}
+            </button>
+            {hoveredTab === ALL_CATEGORIES.id && (
+              <CategoryDropdown category={ALL_CATEGORIES} />
+            )}
+          </div>
+
           <div className={styles.catLinks}>
             {CATEGORIES.map((cat) => (
-              <span key={cat} className={styles.catLink}>{cat}</span>
+              <div
+                key={cat.id}
+                className={styles.catTab}
+                onMouseEnter={() => setHoveredTab(cat.id)}
+                onMouseLeave={() => setHoveredTab(null)}
+              >
+                <span className={styles.catLink} onClick={() => navigate(`/catalog?q=${encodeURIComponent(cat.name)}`)} style={{cursor:'pointer'}}>{cat.name}</span>
+                {hoveredTab === cat.id && <CategoryDropdown category={cat} />}
+              </div>
             ))}
           </div>
         </nav>
