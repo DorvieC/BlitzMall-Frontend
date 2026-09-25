@@ -1,18 +1,28 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
+import { firebaseSendPasswordReset, mapFirebaseError } from '../../firebase/auth';
 import styles from './PasswordRecoveryPage.module.css';
 
 export default function PasswordRecoveryPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate('/confirmation-code'); }, 600);
+    setServerError('');
+    try {
+      await firebaseSendPasswordReset(email.trim());
+      navigate('/confirmation-code', { state: { email: email.trim() } });
+    } catch (err) {
+      setServerError(mapFirebaseError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,6 +93,8 @@ export default function PasswordRecoveryPage() {
                     required
                   />
                 </div>
+
+                {serverError && <div className={styles.serverError}>{serverError}</div>}
 
                 <button type="submit" className={styles.submitBtn} disabled={loading}>
                   {loading ? 'Надсилання...' : 'Надіслати код'}

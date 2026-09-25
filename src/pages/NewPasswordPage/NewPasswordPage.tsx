@@ -1,18 +1,34 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
+import { firebaseVerifyResetCode, firebaseConfirmPasswordReset, mapFirebaseError } from '../../firebase/auth';
 import styles from './NewPasswordPage.module.css';
 
 interface Errors { password?: string; confirmPassword?: string; }
 
 export default function NewPasswordPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const oobCode = searchParams.get('oobCode') ?? '';
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [linkValid, setLinkValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!oobCode) {
+      setLinkValid(false);
+      return;
+    }
+    firebaseVerifyResetCode(oobCode)
+      .then(() => setLinkValid(true))
+      .catch(() => setLinkValid(false));
+  }, [oobCode]);
 
   const validate = (): boolean => {
     const errs: Errors = {};
@@ -24,11 +40,19 @@ export default function NewPasswordPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate('/confirm-new-password'); }, 600);
+    setServerError('');
+    try {
+      await firebaseConfirmPasswordReset(oobCode, password);
+      navigate('/confirm-new-password');
+    } catch (err) {
+      setServerError(mapFirebaseError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const EyeIcon = ({ visible }: { visible: boolean }) => (
@@ -99,6 +123,12 @@ export default function NewPasswordPage() {
             <div className={styles.right}>
               <h2 className={styles.formTitle}>Новий пароль</h2>
 
+              {linkValid === false && (
+                <div className={styles.errorMsg}>
+                  Посилання недійсне або застаріле. Запросіть нове відновлення паролю.
+                </div>
+              )}
+
               <form className={styles.form} onSubmit={handleSubmit} noValidate>
                 <div className={styles.field}>
                   <label className={styles.label}>Новий пароль</label>
@@ -134,7 +164,9 @@ export default function NewPasswordPage() {
                   {errors.confirmPassword && <span className={styles.errorMsg}>{errors.confirmPassword}</span>}
                 </div>
 
-                <button type="submit" className={styles.submitBtn} disabled={loading}>
+                {serverError && <div className={styles.errorMsg}>{serverError}</div>}
+
+                <button type="submit" className={styles.submitBtn} disabled={loading || linkValid !== true}>
                   {loading ? 'Збереження...' : 'Зберегти пароль'}
                 </button>
               </form>
