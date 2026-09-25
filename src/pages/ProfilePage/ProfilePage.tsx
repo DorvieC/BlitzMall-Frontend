@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import { useAuth } from '../../context/AuthContext';
 import { ordersApi } from '../../api/orders';
+import { firebaseLogout } from '../../firebase/auth';
 import type { OrderDto } from '../../types';
 import styles from './ProfilePage.module.css';
 
@@ -54,6 +55,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
+    firebaseLogout().catch(() => undefined);
     navigate('/');
   };
 

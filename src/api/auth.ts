@@ -19,4 +19,9 @@ export const authApi = {
     const { data } = await apiClient.post<AuthResponse>('/auth/register', dto);
     return { token: data.token, user: buildUser(data) };
   },
+
+  firebaseLogin: async (idToken: string): Promise<{ token: string; user: User }> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/firebase-login', { idToken });
+    return { token: data.token, user: buildUser(data) };
+  },
 };

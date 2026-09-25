@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
+import { firebaseRegister, firebaseGoogleLogin, getFirebaseIdToken, mapFirebaseError } from '../../firebase/auth';
 import styles from './RegisterPage.module.css';
 
 interface FormState {
@@ -79,17 +80,35 @@ export default function RegisterPage() {
     setLoading(true);
     setServerError('');
     try {
-      const response = await authApi.register({
-        name: `${form.firstName} ${form.lastName}`.trim(),
-        email: form.email,
-        password: form.password,
-        confirmPassword: form.confirmPassword,
-      });
+      const name = `${form.firstName} ${form.lastName}`.trim();
+      const credential = await firebaseRegister(form.email, form.password, name);
+      const idToken = await getFirebaseIdToken(credential);
+      const response = await authApi.firebaseLogin(idToken);
       login(response.token, response.user);
       navigate('/');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setServerError(e.response?.data?.message || 'Помилка реєстрації. Спробуйте ще раз.');
+      if ((err as { code?: string })?.code) {
+        setServerError(mapFirebaseError(err));
+      } else {
+        const e = err as { response?: { data?: { message?: string } } };
+        setServerError(e.response?.data?.message || 'Помилка реєстрації. Спробуйте ще раз.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    setLoading(true);
+    setServerError('');
+    try {
+      const credential = await firebaseGoogleLogin();
+      const idToken = await getFirebaseIdToken(credential);
+      const response = await authApi.firebaseLogin(idToken);
+      login(response.token, response.user);
+      navigate('/');
+    } catch (err: unknown) {
+      setServerError(mapFirebaseError(err));
     } finally {
       setLoading(false);
     }
@@ -275,7 +294,7 @@ export default function RegisterPage() {
                 <div className={styles.divider}>або увійти за допомогою</div>
                 <div className={styles.formSpacerMd} />
                 <div className={styles.socialBtns}>
-                  <button type="button" className={styles.socialBtn}>
+                  <button type="button" className={styles.socialBtn} onClick={handleGoogleRegister} disabled={loading}>
                     <svg width="24" height="24" viewBox="0 0 48 48">
                       <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.5 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8.9 20-20 0-1.2-.1-2.3-.4-3.5z"/>
                       <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.5 6.5 29.5 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/>

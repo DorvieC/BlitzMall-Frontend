@@ -1,45 +1,30 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
+import { firebaseSendPasswordReset, mapFirebaseError } from '../../firebase/auth';
 import styles from './ConfirmationCodePage.module.css';
 
 export default function ConfirmationCodePage() {
   const navigate = useNavigate();
-  const [code, setCode] = useState<string[]>(Array(6).fill(''));
+  const location = useLocation();
+  const email = (location.state as { email?: string } | null)?.email ?? '';
   const [loading, setLoading] = useState(false);
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+  const [resent, setResent] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (idx: number, val: string) => {
-    const char = val.replace(/\D/g, '').slice(-1);
-    const next = [...code];
-    next[idx] = char;
-    setCode(next);
-    if (char && idx < 5) inputs.current[idx + 1]?.focus();
-  };
-
-  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !code[idx] && idx > 0) inputs.current[idx - 1]?.focus();
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    const next = Array(6).fill('');
-    pasted.split('').forEach((c, i) => { next[i] = c; });
-    setCode(next);
-    inputs.current[Math.min(pasted.length, 5)]?.focus();
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.join('').length < 6) return;
+  const handleResend = async () => {
+    if (!email) return;
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate('/new-password'); }, 600);
-  };
-
-  const handleResend = () => {
-    setCode(Array(6).fill(''));
-    inputs.current[0]?.focus();
+    setError('');
+    setResent(false);
+    try {
+      await firebaseSendPasswordReset(email);
+      setResent(true);
+    } catch (err) {
+      setError(mapFirebaseError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,9 +43,9 @@ export default function ConfirmationCodePage() {
         <div className={styles.greenArea}>
           <div className={styles.content}>
             <div className={styles.left}>
-              <span className={styles.badge}>КОД НАДІСЛАНО</span>
+              <span className={styles.badge}>ЛИСТ НАДІСЛАНО</span>
               <div className={styles.titleRow}>
-                <h1 className={styles.leftTitle}>Перевірте повідомлення</h1>
+                <h1 className={styles.leftTitle}>Перевірте пошту</h1>
                 <img
                   src="/illus-confirm-code.png"
                   alt="Перевірте повідомлення"
@@ -69,8 +54,8 @@ export default function ConfirmationCodePage() {
               </div>
 
               <p className={styles.leftSub}>
-                Ми надіслали 6-значний код підтвердження на вказаний email або
-                номер телефону. Введіть його, щоб продовжити
+                Ми надіслали посилання для відновлення паролю на {email || 'вашу поштову скриньку'}.
+                Перейдіть за посиланням у листі, щоб встановити новий пароль.
               </p>
 
               <div className={styles.benefits}>
@@ -79,14 +64,14 @@ export default function ConfirmationCodePage() {
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  <span className={styles.benefitText}>Код дійсний протягом 10 хвилин</span>
+                  <span className={styles.benefitText}>Посилання дійсне протягом обмеженого часу</span>
                 </div>
                 <div className={styles.benefit}>
                   <svg className={styles.benefitIcon} viewBox="0 0 24 24" fill="none" stroke="#23753f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                     <polyline points="9 12 11 14 15 10"/>
                   </svg>
-                  <span className={styles.benefitText}>Нікому не повідомляйте цей код</span>
+                  <span className={styles.benefitText}>Нікому не передавайте це посилання</span>
                 </div>
                 <div className={styles.benefit}>
                   <svg className={styles.benefitIcon} viewBox="0 0 24 24" fill="none" stroke="#23753f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -98,43 +83,29 @@ export default function ConfirmationCodePage() {
               </div>
             </div>
             <div className={styles.right}>
-              <h2 className={styles.formTitle}>Введіть код підтвердження</h2>
+              <h2 className={styles.formTitle}>Лист надіслано</h2>
+              <p className={styles.leftSub}>
+                Не бачите листа? Перевірте папку "Спам" або надішліть його повторно.
+              </p>
 
-              <form className={styles.form} onSubmit={handleSubmit} noValidate>
-                <div className={styles.codeRow}>
-                  {code.map((digit, idx) => (
-                    <input
-                      key={idx}
-                      ref={(el) => { inputs.current[idx] = el; }}
-                      className={styles.codeInput}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(idx, e)}
-                      onPaste={idx === 0 ? handlePaste : undefined}
-                      autoFocus={idx === 0}
-                    />
-                  ))}
-                </div>
+              {resent && <div className={styles.successMsg}>Лист надіслано повторно.</div>}
+              {error && <div className={styles.errorMsg}>{error}</div>}
 
-                <button
-                  type="submit"
-                  className={styles.submitBtn}
-                  disabled={loading || code.join('').length < 6}
-                >
-                  {loading ? 'Перевірка...' : 'Підтвердити'}
-                </button>
-                <div className={styles.accountLink}>
-                  <span className={styles.accountLinkText}>
-                    Не отримали код?{' '}
-                    <button type="button" className={styles.resendBtn} onClick={handleResend}>
-                      Надіслати повторно
-                    </button>
-                  </span>
-                </div>
-              </form>
+              <button
+                type="button"
+                className={styles.submitBtn}
+                onClick={handleResend}
+                disabled={loading || !email}
+              >
+                {loading ? 'Надсилання...' : 'Надіслати повторно'}
+              </button>
+
+              <div className={styles.accountLink}>
+                <span className={styles.accountLinkText}>
+                  Згадали пароль?{' '}
+                  <Link to="/login">Увійти</Link>
+                </span>
+              </div>
             </div>
           </div>
         </div>
