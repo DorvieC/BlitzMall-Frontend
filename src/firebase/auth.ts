@@ -4,10 +4,16 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   sendPasswordResetEmail,
+  sendEmailVerification,
   confirmPasswordReset,
   verifyPasswordResetCode,
+  signInWithPhoneNumber,
+  linkWithPhoneNumber,
+  updatePassword,
+  RecaptchaVerifier,
   signOut,
   updateProfile,
+  type ConfirmationResult,
   type UserCredential,
 } from 'firebase/auth';
 import { firebaseAuth } from './config';
@@ -21,6 +27,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   'auth/invalid-credential': 'Невірний email або пароль.',
   'auth/too-many-requests': 'Занадто багато спроб. Спробуйте пізніше.',
   'auth/network-request-failed': 'Проблема з мережею. Перевірте з\'єднання.',
+  'auth/invalid-phone-number': 'Некоректний формат номера телефону.',
+  'auth/invalid-verification-code': 'Невірний код підтвердження.',
+  'auth/code-expired': 'Код підтвердження застарів. Надішліть новий.',
+  'auth/provider-already-linked': 'Цей номер телефону вже прив\'язаний.',
+  'auth/credential-already-in-use': 'Цей номер телефону вже використовується іншим акаунтом.',
 };
 
 export function mapFirebaseError(error: unknown): string {
@@ -37,7 +48,61 @@ export async function firebaseRegister(
   if (name) {
     await updateProfile(credential.user, { displayName: name });
   }
+  sendEmailVerification(credential.user).catch(() => undefined);
   return credential;
+}
+
+export function isEmailFormat(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+export function isPhoneFormat(value: string): boolean {
+  return /^\+?\d{9,15}$/.test(value.trim().replace(/[\s()-]/g, ''));
+}
+
+export function normalizePhone(value: string): string {
+  const digits = value.trim().replace(/[\s()-]/g, '');
+  return digits.startsWith('+') ? digits : `+${digits}`;
+}
+
+let recaptchaVerifier: RecaptchaVerifier | null = null;
+
+function getRecaptchaVerifier(): RecaptchaVerifier {
+  if (!recaptchaVerifier) {
+    recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, 'recaptcha-container', {
+      size: 'invisible',
+    });
+  }
+  return recaptchaVerifier;
+}
+
+function resetRecaptcha(): void {
+  recaptchaVerifier?.clear();
+  recaptchaVerifier = null;
+}
+
+export async function firebaseSendPhoneOtp(phoneNumber: string): Promise<ConfirmationResult> {
+  const verifier = getRecaptchaVerifier();
+  try {
+    return await signInWithPhoneNumber(firebaseAuth, phoneNumber, verifier);
+  } finally {
+    resetRecaptcha();
+  }
+}
+
+export async function firebaseLinkPhoneOtp(phoneNumber: string): Promise<ConfirmationResult> {
+  if (!firebaseAuth.currentUser) throw new Error('Not authenticated');
+  const verifier = getRecaptchaVerifier();
+  try {
+    return await linkWithPhoneNumber(firebaseAuth.currentUser, phoneNumber, verifier);
+  } finally {
+    resetRecaptcha();
+  }
+}
+
+export async function firebaseUpdatePassword(newPassword: string): Promise<void> {
+  if (!firebaseAuth.currentUser) throw new Error('Not authenticated');
+  return updatePassword(firebaseAuth.currentUser, newPassword);
 }
 
 export async function firebaseLogin(email: string, password: string): Promise<UserCredential> {

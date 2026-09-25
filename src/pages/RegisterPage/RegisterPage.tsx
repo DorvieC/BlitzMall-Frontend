@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import type { ConfirmationResult } from 'firebase/auth';
 import { authApi } from '../../api/auth';
+import type { User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
-import { firebaseRegister, firebaseGoogleLogin, getFirebaseIdToken, mapFirebaseError } from '../../firebase/auth';
+import {
+  firebaseRegister,
+  firebaseGoogleLogin,
+  firebaseLinkPhoneOtp,
+  getFirebaseIdToken,
+  isPhoneFormat,
+  normalizePhone,
+  mapFirebaseError,
+} from '../../firebase/auth';
 import styles from './RegisterPage.module.css';
 
 interface FormState {
@@ -43,6 +53,10 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'form' | 'verify-phone'>('form');
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [phoneCode, setPhoneCode] = useState('');
+  const [pendingAuth, setPendingAuth] = useState<{ token: string; user: User } | null>(null);
 
   const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -84,6 +98,19 @@ export default function RegisterPage() {
       const credential = await firebaseRegister(form.email, form.password, name);
       const idToken = await getFirebaseIdToken(credential);
       const response = await authApi.firebaseLogin(idToken);
+
+      if (form.phone.trim() && isPhoneFormat(form.phone)) {
+        try {
+          const result = await firebaseLinkPhoneOtp(normalizePhone(form.phone));
+          setConfirmation(result);
+          setPendingAuth(response);
+          setStep('verify-phone');
+          return;
+        } catch {
+          // phone linking failed to start, fall back to completing registration by email only
+        }
+      }
+
       login(response.token, response.user);
       navigate('/');
     } catch (err: unknown) {
@@ -96,6 +123,28 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerifyPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmation || !pendingAuth || phoneCode.length < 6) return;
+    setLoading(true);
+    setServerError('');
+    try {
+      await confirmation.confirm(phoneCode);
+      login(pendingAuth.token, pendingAuth.user);
+      navigate('/');
+    } catch (err) {
+      setServerError(mapFirebaseError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkipPhone = () => {
+    if (!pendingAuth) return;
+    login(pendingAuth.token, pendingAuth.user);
+    navigate('/');
   };
 
   const handleGoogleRegister = async () => {
@@ -180,8 +229,34 @@ export default function RegisterPage() {
 
             
             <div className={styles.right}>
-              <h2 className={styles.formTitle}>Створити акаунт</h2>
+              <h2 className={styles.formTitle}>
+                {step === 'verify-phone' ? 'Підтвердіть номер телефону' : 'Створити акаунт'}
+              </h2>
 
+              {step === 'verify-phone' ? (
+                <form className={styles.form} onSubmit={handleVerifyPhone} noValidate>
+                  <div className={styles.field}>
+                    <label className={styles.label}>SMS-код</label>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="123456"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    />
+                  </div>
+
+                  {serverError && <div className={styles.serverError}>{serverError}</div>}
+
+                  <button type="submit" className={styles.submitBtn} disabled={loading}>
+                    {loading ? 'Перевірка...' : 'Підтвердити'}
+                  </button>
+                  <button type="button" className={styles.termsLink} onClick={handleSkipPhone}>
+                    Пропустити
+                  </button>
+                </form>
+              ) : (
               <form className={styles.form} onSubmit={handleSubmit} noValidate>
                 <div className={styles.row2}>
                   <div className={styles.field}>
@@ -282,7 +357,17 @@ export default function RegisterPage() {
                 </div>
                 {errors.agreeTerms && <span className={styles.errorMsg}>{errors.agreeTerms}</span>}
 
-                {serverError && <div className={styles.serverError}>{serverError}</div>}
+                {serverError && (
+                  <div className={styles.serverError}>
+                    {serverError}
+                    {serverError.includes('вже зареєстрований') && (
+                      <>
+                        {' '}
+                        <Link to="/login">Увійти</Link>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.formSpacerMd} />
                 <button type="submit" className={styles.submitBtn} disabled={loading}>
@@ -305,6 +390,7 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </form>
+              )}
 
               
               <div className={styles.accountLink}>

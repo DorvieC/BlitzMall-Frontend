@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import type { ConfirmationResult } from 'firebase/auth';
 import AuthHeader from '../../components/AuthHeader/AuthHeader';
-import { firebaseSendPasswordReset, mapFirebaseError } from '../../firebase/auth';
+import {
+  firebaseSendPasswordReset,
+  firebaseSendPhoneOtp,
+  firebaseUpdatePassword,
+  firebaseLogout,
+  isEmailFormat,
+  isPhoneFormat,
+  normalizePhone,
+  mapFirebaseError,
+} from '../../firebase/auth';
 import styles from './PasswordRecoveryPage.module.css';
 
 export default function PasswordRecoveryPage() {
@@ -9,15 +19,45 @@ export default function PasswordRecoveryPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [step, setStep] = useState<'request' | 'verify-phone'>('request');
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const value = email.trim();
+    if (!value) return;
     setLoading(true);
     setServerError('');
     try {
-      await firebaseSendPasswordReset(email.trim());
-      navigate('/confirmation-code', { state: { email: email.trim() } });
+      if (isEmailFormat(value)) {
+        await firebaseSendPasswordReset(value);
+        navigate('/confirmation-code', { state: { email: value } });
+      } else if (isPhoneFormat(value)) {
+        const result = await firebaseSendPhoneOtp(normalizePhone(value));
+        setConfirmation(result);
+        setStep('verify-phone');
+      } else {
+        setServerError('Введіть коректний email або номер телефону у форматі +380XXXXXXXXX');
+      }
+    } catch (err) {
+      setServerError(mapFirebaseError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmation || code.length < 6 || newPassword.length < 8) return;
+    setLoading(true);
+    setServerError('');
+    try {
+      await confirmation.confirm(code);
+      await firebaseUpdatePassword(newPassword);
+      await firebaseLogout();
+      navigate('/confirm-new-password');
     } catch (err) {
       setServerError(mapFirebaseError(err));
     } finally {
@@ -81,31 +121,67 @@ export default function PasswordRecoveryPage() {
             <div className={styles.right}>
               <h2 className={styles.formTitle}>Відновлення паролю</h2>
 
-              <form className={styles.form} onSubmit={handleSubmit} noValidate>
-                <div className={styles.field}>
-                  <label className={styles.label}>Email або телефон</label>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    placeholder="exmple@mail.com або +380 XX XXX XX XX"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+              {step === 'request' && (
+                <form className={styles.form} onSubmit={handleSubmit} noValidate>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Email або телефон</label>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      placeholder="exmple@mail.com або +380XXXXXXXXX"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                {serverError && <div className={styles.serverError}>{serverError}</div>}
+                  {serverError && <div className={styles.serverError}>{serverError}</div>}
 
-                <button type="submit" className={styles.submitBtn} disabled={loading}>
-                  {loading ? 'Надсилання...' : 'Надіслати код'}
-                </button>
-                <div className={styles.accountLink}>
-                  <span className={styles.accountLinkText}>
-                    Згадали пароль?{' '}
-                    <Link to="/login">Увійти</Link>
-                  </span>
-                </div>
-              </form>
+                  <button type="submit" className={styles.submitBtn} disabled={loading}>
+                    {loading ? 'Надсилання...' : 'Надіслати код'}
+                  </button>
+                  <div className={styles.accountLink}>
+                    <span className={styles.accountLinkText}>
+                      Згадали пароль?{' '}
+                      <Link to="/login">Увійти</Link>
+                    </span>
+                  </div>
+                </form>
+              )}
+
+              {step === 'verify-phone' && (
+                <form className={styles.form} onSubmit={handleVerifyPhone} noValidate>
+                  <div className={styles.field}>
+                    <label className={styles.label}>SMS-код</label>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="123456"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      required
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Новий пароль</label>
+                    <input
+                      className={styles.input}
+                      type="password"
+                      placeholder="Мінімум 8 символів"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {serverError && <div className={styles.serverError}>{serverError}</div>}
+
+                  <button type="submit" className={styles.submitBtn} disabled={loading}>
+                    {loading ? 'Перевірка...' : 'Змінити пароль'}
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
