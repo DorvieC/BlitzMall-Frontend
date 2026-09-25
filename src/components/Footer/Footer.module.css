@@ -1,184 +1,132 @@
 .footer {
-  background: #fff;
   border-top: 1px solid rgba(0,0,0,0.12);
-  padding-top: 40px;
+  margin-top: 40px;
+  padding: 40px 77px 0;
 }
 
-.statsBar {
-  background: var(--color-primary);
+.footerTop {
   display: flex;
   gap: 0;
+  padding-bottom: 40px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
 }
 
-.statItem {
-  flex: 1;
+.footerLogo {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 40px 20px;
-  border-right: 1px solid rgba(255,255,255,0.15);
-}
-
-.statItem:last-child {
-  border-right: none;
-}
-
-.statItem img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-
-.statText {
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  max-width: 200px;
-}
-
-.newsletter {
-  background: var(--color-primary-mid);
-  display: flex;
-  align-items: center;
-  padding: 40px 80px;
-  gap: 24px;
-}
-
-.newsletterIcon {
-  width: 58px;
-  height: 58px;
-  filter: brightness(0) invert(1);
+  flex-direction: column;
+  margin-right: 100px;
   flex-shrink: 0;
 }
 
-.newsletterText {
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  max-width: 340px;
+.footerLogoImg {
+  width: 279px;
+  height: 91px;
+  object-fit: contain;
 }
 
-.newsletterForm {
+.footerLinks {
   display: flex;
-  flex: 1;
-  max-width: 560px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  gap: 118px;
 }
 
-.newsletterInput {
-  flex: 1;
-  padding: 16px 20px;
-  font-size: 16px;
-  border: none;
-  background: rgba(255,255,255,0.9);
-}
-
-.newsletterBtn {
-  background: var(--color-primary);
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 16px 28px;
-  white-space: nowrap;
-}
-
-.linksRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 40px 80px 32px;
-}
-
-.linkGroup h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-dark);
-  margin-bottom: 16px;
-}
-
-.linkGroup ul {
-  list-style: none;
+.footerLinkGroup {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-.linkGroup li {
-  font-size: 15px;
-  color: var(--color-text-muted);
+.footerLinkTitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  color: #323f37;
+  line-height: 22px;
+}
+
+.footerLinkList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.footerLink {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #323f37;
+  line-height: 22px;
   cursor: pointer;
-  transition: color 0.2s;
 }
 
-.linkGroup li:hover {
-  color: var(--color-primary);
+.footerLink:hover {
+  color: #256c43;
 }
 
-.socialRow {
-  padding: 0 80px 32px;
+.footerSocial {
+  margin-left: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .socialTitle {
-  font-size: 16px;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  color: var(--color-dark);
+  font-size: 20px;
+  color: #323f37;
 }
 
 .socialIcons {
   display: flex;
-  gap: 16px;
+  gap: 10px;
 }
 
 .socialBtn {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   cursor: pointer;
+  font-size: 22px;
   transition: background 0.2s;
 }
 
 .socialBtn:hover {
-  background: var(--color-bg);
+  background: #f0fdf4;
 }
 
-.bottom {
+.footerBottom {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 80px;
-  border-top: 1px solid var(--color-border);
+  padding: 16px 0 24px;
 }
 
 .copyright {
-  font-size: 14px;
-  color: var(--color-text-muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  color: #323f37;
 }
 
 @media (max-width: 1440px) {
   .footer { padding: 40px 32px 0; }
+  .footerTop { flex-wrap: wrap; gap: 32px; }
+  .footerLinks { gap: 40px; }
 }
 
 @media (max-width: 1024px) {
-  .statsBar     { padding: 16px 32px; gap: 20px; }
-  .statItem     { gap: 8px; }
-  .statBig      { font-size: 22px; }
-  .bottomContent { flex-wrap: wrap; gap: 32px; }
-  .linksCol     { gap: 20px; }
+  .footerLinks { gap: 24px; flex-wrap: wrap; }
 }
 
 @media (max-width: 768px) {
-  .statsBar       { flex-wrap: wrap; }
-  .bottomContent  { flex-direction: column; }
-  .linksCol       { width: 100%; gap: 16px; }
-  .socialSection  { margin-top: 16px; }
+  .footerTop    { flex-direction: column; }
+  .footerSocial { margin-left: 0; }
+}
+
+@media (max-width: 480px) {
+  .footerLinks { flex-direction: column; gap: 20px; }
 }

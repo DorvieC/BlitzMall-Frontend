@@ -4,6 +4,7 @@
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  overflow: visible;
 }
 
 .topBar {
@@ -183,20 +184,24 @@
 }
 
 .catNav {
+  position: relative;
   max-width: 1980px;
   margin: 0 auto;
-  padding: 0 24px;
-  height: 42px;
+  padding: 0 24px 8px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: nowrap;
   gap: 32px;
   border-top: 1px solid rgba(0,0,0,0.06);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
+  overflow: visible;
 }
-.catNav::-webkit-scrollbar { display: none; }
+
+.catTab {
+  position: relative;
+  flex-shrink: 0;
+}
 
 .catAllBtn {
   width: 181px;
@@ -216,13 +221,6 @@
   cursor: pointer;
 }
 
-.catLinks {
-  display: flex;
-  gap: 32px;
-  align-items: center;
-  flex-shrink: 0;
-}
-
 .catLink {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
@@ -231,6 +229,9 @@
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 8px 0;
 }
 
 .catLink:hover {
@@ -244,7 +245,7 @@
   .langGroup    { display: none; }
   .currency     { display: none; }
   .catLink      { font-size: 15px; }
-  .catLinks     { gap: 20px; }
+  .catNav       { gap: 20px; }
 }
 
 @media (max-width: 900px) {

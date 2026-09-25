@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { ALL_CATEGORIES, CATEGORIES } from '../../data/categories';
+import { CategoryDropdown } from '../CategoryDropdown/CategoryDropdown';
 import styles from './Header.module.css';
 
 import searchIcon   from '../../assets/icons/search.svg';
@@ -10,16 +12,6 @@ import accountIcon  from '../../assets/icons/account.svg';
 import cartIcon     from '../../assets/icons/cart.svg';
 import logoImg      from '../../assets/images/logo-full.png';
 
-const CATEGORIES = [
-  'Електроніка',
-  'Дім і кухня',
-  'Одяг і взуття',
-  "Краса і здовов'я",
-  'Спорт і відпочинок',
-  'Дитячі товари',
-  'Зоотовари',
-];
-
 interface HeaderProps {
   full?: boolean;
 }
@@ -28,11 +20,24 @@ export default function Header({ full = true }: HeaderProps) {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) navigate(`/?search=${encodeURIComponent(query)}`);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setHoveredTab(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className={styles.header}>
@@ -77,7 +82,7 @@ export default function Header({ full = true }: HeaderProps) {
             </Link>
           )}
 
-          <Link to="/cart" className={styles.cartWrap}>
+          <Link to="/basket" className={styles.cartWrap}>
             <img src={cartIcon} alt="Кошик" className={styles.cartIcon} />
             <span className={styles.cartBadge}>0</span>
           </Link>
@@ -85,13 +90,33 @@ export default function Header({ full = true }: HeaderProps) {
       </div>
 
       {full && (
-        <nav className={styles.catNav}>
-          <button className={styles.catAllBtn}>Усі категорії</button>
-          <div className={styles.catLinks}>
-            {CATEGORIES.map((cat) => (
-              <span key={cat} className={styles.catLink}>{cat}</span>
-            ))}
+        <nav ref={navRef} className={styles.catNav}>
+          <div
+            className={styles.catTab}
+            onMouseEnter={() => setHoveredTab(ALL_CATEGORIES.id)}
+            onMouseLeave={() => setHoveredTab(null)}
+          >
+            <Link to="/categories" className={styles.catAllBtn}>
+    {ALL_CATEGORIES.name}
+  </Link>
+  {hoveredTab === ALL_CATEGORIES.id && (
+    <CategoryDropdown category={ALL_CATEGORIES} />
+  )}
           </div>
+
+          {CATEGORIES.map((cat) => (
+            <div
+              key={cat.id}
+              className={styles.catTab}
+              onMouseEnter={() => setHoveredTab(cat.id)}
+              onMouseLeave={() => setHoveredTab(null)}
+            >
+              <button type="button" className={styles.catLink}>
+                {cat.name}
+              </button>
+              {hoveredTab === cat.id && <CategoryDropdown category={cat} />}
+            </div>
+          ))}
         </nav>
       )}
     </header>
