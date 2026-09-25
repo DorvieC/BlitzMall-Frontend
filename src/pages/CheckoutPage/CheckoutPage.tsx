@@ -5,6 +5,8 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { ordersApi } from '../../api/orders';
 import { productsApi } from '../../api/products';
+import DeliverySelector from '../../components/DeliverySelector/DeliverySelector';
+import type { DeliveryValue } from '../../components/DeliverySelector/DeliverySelector';
 import type { Product } from '../../types';
 import styles from './CheckoutPage.module.css';
 
@@ -14,8 +16,6 @@ interface DeliveryForm {
   firstName: string;
   lastName: string;
   phone: string;
-  city: string;
-  address: string;
   comment: string;
 }
 
@@ -36,14 +36,18 @@ export default function CheckoutPage() {
   const [productMap, setProductMap] = useState<Record<number, Product>>({});
 
   const [delivery, setDelivery] = useState<DeliveryForm>({
-    firstName: '', lastName: '', phone: '', city: '', address: '', comment: '',
+    firstName: '', lastName: '', phone: '', comment: '',
+  });
+
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryValue>({
+    carrier: 'nova-poshta', cityName: '', cityRef: '', warehouseDescription: '', manualAddress: '',
   });
 
   const [payment, setPayment] = useState<PaymentForm>({
     cardNumber: '', cardName: '', expiry: '', cvv: '',
   });
 
-  const [errors, setErrors] = useState<Partial<DeliveryForm & PaymentForm>>({});
+  const [errors, setErrors] = useState<Partial<DeliveryForm & PaymentForm & { city: string; warehouse: string; address: string }>>({});
 
   useEffect(() => {
     if (!cart || cart.items.length === 0) return;
@@ -103,12 +107,17 @@ export default function CheckoutPage() {
   };
 
   const validateDelivery = () => {
-    const errs: Partial<DeliveryForm> = {};
+    const errs: Partial<DeliveryForm & { city: string; warehouse: string; address: string }> = {};
     if (!delivery.firstName.trim()) errs.firstName = "Вкажіть ім'я";
     if (!delivery.lastName.trim())  errs.lastName  = 'Вкажіть прізвище';
     if (!delivery.phone.trim())     errs.phone     = 'Вкажіть телефон';
-    if (!delivery.city.trim())      errs.city      = 'Вкажіть місто';
-    if (!delivery.address.trim())   errs.address   = 'Вкажіть адресу';
+    if (!deliveryMethod.cityName.trim()) errs.city = 'Вкажіть місто';
+    if (deliveryMethod.carrier === 'courier') {
+      if (!deliveryMethod.manualAddress.trim()) errs.address = 'Вкажіть адресу';
+    } else {
+      if (!deliveryMethod.warehouseDescription.trim()) errs.warehouse = 'Вкажіть відділення';
+      if (deliveryMethod.carrier === 'nova-poshta' && !deliveryMethod.cityRef) errs.city = 'Оберіть місто зі списку';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -128,13 +137,25 @@ export default function CheckoutPage() {
     if (validateDelivery()) setStep('payment');
   };
 
+  const buildDeliveryAddress = () => {
+    const carrierLabel = deliveryMethod.carrier === 'nova-poshta'
+      ? 'Нова Пошта'
+      : deliveryMethod.carrier === 'ukrposhta'
+        ? 'Укрпошта'
+        : "Кур'єрська доставка";
+    const detail = deliveryMethod.carrier === 'courier'
+      ? deliveryMethod.manualAddress
+      : deliveryMethod.warehouseDescription;
+    return `${carrierLabel}, ${deliveryMethod.cityName}, ${detail}`;
+  };
+
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validatePayment()) return;
     setPaymentLoading(true);
     try {
       await ordersApi.create({
-        deliveryAddress: `${delivery.city}, ${delivery.address}`,
+        deliveryAddress: buildDeliveryAddress(),
         phone: delivery.phone,
         comment: delivery.comment || undefined,
       });
@@ -224,19 +245,11 @@ export default function CheckoutPage() {
                   {errors.phone && <span className={styles.err}>{errors.phone}</span>}
                 </div>
 
-                <div className={styles.field}>
-                  <label className={styles.label}>Місто</label>
-                  <input className={`${styles.input} ${errors.city ? styles.inputErr : ''}`}
-                    placeholder="Київ" value={delivery.city} onChange={setDeliveryField('city')} />
-                  {errors.city && <span className={styles.err}>{errors.city}</span>}
-                </div>
-
-                <div className={styles.field}>
-                  <label className={styles.label}>Адреса доставки або відділення Нової Пошти</label>
-                  <input className={`${styles.input} ${errors.address ? styles.inputErr : ''}`}
-                    placeholder="вул. Хрещатик, 1, кв. 5" value={delivery.address} onChange={setDeliveryField('address')} />
-                  {errors.address && <span className={styles.err}>{errors.address}</span>}
-                </div>
+                <DeliverySelector
+                  value={deliveryMethod}
+                  onChange={setDeliveryMethod}
+                  errors={{ city: errors.city, warehouse: errors.warehouse, address: errors.address }}
+                />
 
                 <div className={styles.field}>
                   <label className={styles.label}>Коментар до замовлення (необов'язково)</label>
