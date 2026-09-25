@@ -82,7 +82,7 @@ export default function Header({ full = true }: HeaderProps) {
             </Link>
           )}
 
-          <Link to="/cart" className={styles.cartWrap}>
+          <Link to="/basket" className={styles.cartWrap}>
             <img src={cartIcon} alt="Кошик" className={styles.cartIcon} />
             <span className={styles.cartBadge}>0</span>
           </Link>
