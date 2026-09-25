@@ -3,6 +3,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   overflow: visible;
 }
 
@@ -183,6 +184,7 @@
 }
 
 .catNav {
+  position: relative;
   max-width: 1980px;
   margin: 0 auto;
   padding: 14px 24px 14px;
@@ -191,16 +193,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: nowrap;
   gap: 32px;
-  /* overflow must stay visible so absolute-positioned dropdowns
-     are not clipped. catNav is hidden on mobile (display:none @900px)
-     so no need for horizontal scrolling. */
   overflow: visible;
   scrollbar-width: none;
   position: relative;
   z-index: 1000;
+  border-top: 1px solid rgba(0,0,0,0.06);
 }
-.catNav::-webkit-scrollbar { display: none; }
 
 .catAllBtn {
   position: relative;
@@ -242,6 +242,9 @@
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 8px 0;
 }
 
 .catLink:hover {
@@ -255,7 +258,7 @@
   .langGroup    { display: none; }
   .currency     { display: none; }
   .catLink      { font-size: 15px; }
-  .catLinks     { gap: 20px; }
+  .catNav       { gap: 20px; }
 }
 
 @media (max-width: 900px) {

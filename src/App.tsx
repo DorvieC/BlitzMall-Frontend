@@ -13,6 +13,11 @@ import PasswordRecoveryPage from './pages/PasswordRecoveryPage/PasswordRecoveryP
 import ConfirmationCodePage from './pages/ConfirmationCodePage/ConfirmationCodePage';
 import NewPasswordPage from './pages/NewPasswordPage/NewPasswordPage';
 import ConfirmNewPasswordPage from './pages/ConfirmNewPasswordPage/ConfirmNewPasswordPage';
+import { CategoryCatalogPage } from './pages/CategoryCatalogPage/CategoryCatalogPage';
+import { AllProductsPage } from './pages/AllProductsPage/AllProductsPage';
+import Delivery from './pages/Delivery/Delivery';
+import Payment from './pages/Payment/Payment';
+import { OrderVerification } from './pages/OrderVerification /OrderVerification';
 
 export default function App() {
   return (
@@ -32,6 +37,11 @@ export default function App() {
             <Route path="/confirmation-code"     element={<ConfirmationCodePage />} />
             <Route path="/new-password"          element={<NewPasswordPage />} />
             <Route path="/confirm-new-password"  element={<ConfirmNewPasswordPage />} />
+            <Route path="/categories"            element={<CategoryCatalogPage />} />
+            <Route path="/all-products"          element={<AllProductsPage />} />
+            <Route path="/delivery"              element={<Delivery />} />
+            <Route path="/payment"               element={<Payment />} />
+            <Route path="/order-verification"    element={<OrderVerification />} />
             <Route path="*"                      element={<Navigate to="/" replace />} />
           </Routes>
         </CartProvider>
