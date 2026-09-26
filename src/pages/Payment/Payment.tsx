@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Payment.module.css';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/Footer/Footer';
-import type { PaymentMethod, PaymentFormData, CheckoutPaymentProps, DeliveryNavState } from '../../types'; // <- шлях підстав під свій
+import type { PaymentMethod, PaymentFormData, CheckoutPaymentProps, DeliveryNavState } from '../../types';
 
 const UAH = '₴';
 const fmt = (n: number) => n.toLocaleString('uk-UA').replace(/\u00a0/g, ' ');
@@ -14,7 +14,6 @@ const defaultPaymentMethods: PaymentMethod[] = [
   { id: 'apple-pay', name: 'Apple Pay', description: 'оплата в один клік' },
   { id: 'google-pay', name: 'Google Pay', description: 'оплата в один дотик' },
   { id: 'cod', name: 'Післяплата', description: 'оплата при отриманні + 20 ₴' },
-  { id: 'installment', name: 'Розстрочка / онлайн-кредит', description: 'до 12 платежів' },
   { id: 'wallet', name: 'Внутрішній гаманець', description: 'баланс 0 ₴ + 340 бонусів' },
 ];
 
@@ -32,9 +31,11 @@ export default function Payment({
 }: CheckoutPaymentProps) {
   const [paymentMethodId, setPaymentMethodId] = useState(paymentMethods[0]?.id ?? '');
   const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [promo, setPromo] = useState('');
+  const [errors, setErrors] = useState<{ cardNumber?: string; cardName?: string; cardExpiry?: string; cardCvv?: string }>({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,14 +49,46 @@ export default function Payment({
   const deliveryPrice = fromDelivery.deliveryPrice ?? deliveryPriceProp ?? 0;
   const deliveryLabel = fromDelivery.deliveryLabel ?? deliveryLabelProp ?? '';
   const cashback = fromDelivery.cashback ?? cashbackProp ?? 0;
+  const firstName = fromDelivery.firstName ?? '';
+  const lastName = fromDelivery.lastName ?? '';
+  const phone = fromDelivery.phone ?? '';
+  const address = fromDelivery.address ?? '';
+  const comment = fromDelivery.comment ?? '';
 
   const selectedMethod = paymentMethods.find((m) => m.id === paymentMethodId);
   const needsCardFields = !!selectedMethod?.requiresCard;
   const total = goodsTotal + deliveryPrice;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    setCardNumber(val);
+    setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+  };
 
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
+    setCardExpiry(val);
+    setErrors((prev) => ({ ...prev, cardExpiry: undefined }));
+  };
+
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3));
+    setErrors((prev) => ({ ...prev, cardCvv: undefined }));
+  };
+
+  const validate = () => {
+    if (!needsCardFields) return true;
+    const errs: typeof errors = {};
+    if (cardNumber.replace(/\s/g, '').length < 16) errs.cardNumber = 'Невірний номер картки';
+    if (!cardName.trim()) errs.cardName = "Вкажіть ім'я власника";
+    if (cardExpiry.length < 5) errs.cardExpiry = 'Невірна дата';
+    if (cardCvv.length < 3) errs.cardCvv = 'Невірний CVV';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const proceedToVerification = () => {
     const data: PaymentFormData = {
       paymentMethodId,
       ...(needsCardFields ? { cardNumber, cardExpiry, cardCvv } : {}),
@@ -76,8 +109,19 @@ export default function Payment({
         deliveryLabel,
         cashback,
         total,
+        firstName,
+        lastName,
+        phone,
+        address,
+        comment,
       },
     });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    proceedToVerification();
   };
 
   return (
@@ -147,8 +191,20 @@ export default function Payment({
                     inputMode="numeric"
                     placeholder="0000 0000 0000 0000"
                     value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
+                    onChange={handleCardNumberChange}
                   />
+                  {errors.cardNumber && <span className={styles.err}>{errors.cardNumber}</span>}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="cardName">Ім'я власника</label>
+                  <input
+                    id="cardName"
+                    type="text"
+                    placeholder="IVAN PETRENKO"
+                    value={cardName}
+                    onChange={(e) => { setCardName(e.target.value); setErrors((prev) => ({ ...prev, cardName: undefined })); }}
+                  />
+                  {errors.cardName && <span className={styles.err}>{errors.cardName}</span>}
                 </div>
                 <div className={styles.field}>
                   <label htmlFor="cardExpiry">Термін дії</label>
@@ -157,8 +213,9 @@ export default function Payment({
                     type="text"
                     placeholder="MM / YY"
                     value={cardExpiry}
-                    onChange={(e) => setCardExpiry(e.target.value)}
+                    onChange={handleExpiryChange}
                   />
+                  {errors.cardExpiry && <span className={styles.err}>{errors.cardExpiry}</span>}
                 </div>
                 <div className={styles.field}>
                   <label htmlFor="cardCvv">CVV</label>
@@ -169,8 +226,9 @@ export default function Payment({
                     placeholder="•••"
                     maxLength={4}
                     value={cardCvv}
-                    onChange={(e) => setCardCvv(e.target.value)}
+                    onChange={handleCvvChange}
                   />
+                  {errors.cardCvv && <span className={styles.err}>{errors.cardCvv}</span>}
                 </div>
               </div>
             )}

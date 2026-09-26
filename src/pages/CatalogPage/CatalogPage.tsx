@@ -4,6 +4,7 @@ import Header from '../../components/Header/Header';
 import { productsApi } from '../../api/products';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { CATEGORIES } from '../../data/categories';
 import type { Product } from '../../types';
 import styles from './CatalogPage.module.css';
 
@@ -25,7 +26,9 @@ export default function CatalogPage() {
   const q = searchParams.get('q') || '';
   const minPriceParam = searchParams.get('minPrice') || '';
   const maxPriceParam = searchParams.get('maxPrice') || '';
+  const categoryIdParam = searchParams.get('categoryId') || '';
   const page = Number(searchParams.get('page') || '1');
+  const activeCategory = CATEGORIES.find((c) => String(c.backendId) === categoryIdParam);
 
   const [localQ, setLocalQ] = useState(q);
   const [localMin, setLocalMin] = useState(minPriceParam);
@@ -41,6 +44,7 @@ export default function CatalogPage() {
     try {
       const result = await productsApi.search({
         q: q || undefined,
+        categoryId: categoryIdParam ? Number(categoryIdParam) : undefined,
         minPrice: minPriceParam ? Number(minPriceParam) : undefined,
         maxPrice: maxPriceParam ? Number(maxPriceParam) : undefined,
         page,
@@ -54,7 +58,7 @@ export default function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [q, minPriceParam, maxPriceParam, page]);
+  }, [q, categoryIdParam, minPriceParam, maxPriceParam, page]);
 
   useEffect(() => {
     fetchProducts();
@@ -97,7 +101,7 @@ export default function CatalogPage() {
     setSearchParams({});
   };
 
-  const hasFilters = q || minPriceParam || maxPriceParam;
+  const hasFilters = q || minPriceParam || maxPriceParam || categoryIdParam;
 
   return (
     <div className={styles.page}>
@@ -161,7 +165,7 @@ export default function CatalogPage() {
           <main className={styles.main}>
             <div className={styles.topBar}>
               <h1 className={styles.pageTitle}>
-                {q ? `Результати: «${q}»` : 'Каталог товарів'}
+                {activeCategory ? activeCategory.name : q ? `Результати: «${q}»` : 'Каталог товарів'}
               </h1>
               {!loading && (
                 <span className={styles.count}>

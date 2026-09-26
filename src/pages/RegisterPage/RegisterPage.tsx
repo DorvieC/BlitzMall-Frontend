@@ -141,12 +141,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSkipPhone = () => {
-    if (!pendingAuth) return;
-    login(pendingAuth.token, pendingAuth.user);
-    navigate('/');
-  };
-
   const handleGoogleRegister = async () => {
     setLoading(true);
     setServerError('');
@@ -251,9 +245,6 @@ export default function RegisterPage() {
 
                   <button type="submit" className={styles.submitBtn} disabled={loading}>
                     {loading ? 'Перевірка...' : 'Підтвердити'}
-                  </button>
-                  <button type="button" className={styles.termsLink} onClick={handleSkipPhone}>
-                    Пропустити
                   </button>
                 </form>
               ) : (

@@ -4,6 +4,7 @@ export interface CreateOrderDto {
   deliveryAddress: string;
   phone: string;
   comment?: string;
+  paymentMethod?: string;
 }
 
 export interface OrderItemDto {
@@ -21,6 +22,7 @@ export interface OrderDto {
   deliveryAddress: string;
   phone: string;
   comment?: string;
+  paymentMethod?: string;
   createdDate?: string;
   items: OrderItemDto[];
 }

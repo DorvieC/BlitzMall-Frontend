@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Delivery.module.css';
 import Header from '../../components/Header/Header';
 import Footer from '../../components/Footer/Footer';
-import type { CheckoutDeliveryProps, DeliveryMethod } from '../../types/index';
+import { novaPoshtaApi } from '../../api/novaPoshta';
+import type { NpCity, NpWarehouse } from '../../api/novaPoshta';
+import type { CheckoutDeliveryProps, DeliveryMethod, DeliveryNavState } from '../../types/index';
 
 const UAH = '₴';
 const fmt = (n: number) => n.toLocaleString('uk-UA').replace(/\u00a0/g, ' ');
@@ -15,35 +17,121 @@ const defaultDeliveryMethods: DeliveryMethod[] = [
   { id: 'pickup', name: 'Самовивіз', eta: '1-2 дні', price: 0 },
 ];
 
-export default function Delivery({
-  itemsCount = 0,
-  goodsTotal = 0,
-  cashback = 0,
-  deliveryMethods = defaultDeliveryMethods,
-  onSubmit,
-  onApplyPromo,
-}: CheckoutDeliveryProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
-  const [deliveryMethodId, setDeliveryMethodId] = useState(deliveryMethods[0]?.id ?? '');
-  const [address, setAddress] = useState('');
-  const [comment, setComment] = useState('');
-  const [promo, setPromo] = useState('');
+export default function Delivery(props: CheckoutDeliveryProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const navState = (location.state ?? {}) as DeliveryNavState;
 
-  // items (список товарів кошика) поки не приходять як пропс сюди —
-  // якщо їх передає Basket/контекст через location.state, підхоплюємо звідси
-  const items = (location.state as { items?: unknown[] } | null)?.items ?? [];
+  const itemsCount = navState.itemsCount ?? props.itemsCount ?? 0;
+  const goodsTotal = navState.goodsTotal ?? props.goodsTotal ?? 0;
+  const cashback = navState.cashback ?? props.cashback ?? 0;
+  const items = navState.items ?? [];
+  const deliveryMethods = props.deliveryMethods ?? defaultDeliveryMethods;
+  const { onSubmit, onApplyPromo } = props;
+
+  const [firstName, setFirstName] = useState(navState.firstName ?? '');
+  const [lastName, setLastName] = useState(navState.lastName ?? '');
+  const [phone, setPhone] = useState(navState.phone ?? '');
+  const [city, setCity] = useState('');
+  const [cityRef, setCityRef] = useState('');
+  const [deliveryMethodId, setDeliveryMethodId] = useState(deliveryMethods[0]?.id ?? '');
+  const [address, setAddress] = useState(navState.address ?? '');
+  const [comment, setComment] = useState(navState.comment ?? '');
+  const [promo, setPromo] = useState('');
+
+  const [cityResults, setCityResults] = useState<NpCity[]>([]);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [warehouseResults, setWarehouseResults] = useState<NpWarehouse[]>([]);
+  const [warehouseOpen, setWarehouseOpen] = useState(false);
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; phone?: string; city?: string; address?: string }>({});
+
+  const isNovaPoshta = deliveryMethodId === 'nova-poshta';
+  const isUkrposhta = deliveryMethodId === 'ukrposhta';
+  const isCourier = deliveryMethodId === 'courier';
+  const isPickup = deliveryMethodId === 'pickup';
+  const isWarehouseCarrier = isNovaPoshta || isUkrposhta;
+  const needsCity = !isPickup;
+  const needsAddress = !isPickup;
+  const addressLabel = isWarehouseCarrier ? 'Відділення / Поштомат' : 'Адреса';
+  const cityBoxRef = useRef<HTMLDivElement>(null);
+  const addressBoxRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (cityBoxRef.current && !cityBoxRef.current.contains(e.target as Node)) setCityOpen(false);
+      if (addressBoxRef.current && !addressBoxRef.current.contains(e.target as Node)) setWarehouseOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleCityChange = (value: string) => {
+    setCity(value);
+    setCityRef('');
+    if (!isNovaPoshta) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (value.trim().length < 2) { setCityResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      const results = await novaPoshtaApi.searchCities(value).catch(() => []);
+      setCityResults(results);
+      setCityOpen(true);
+    }, 350);
+  };
+
+  const handleSelectCity = (c: NpCity) => {
+    setCity(c.name);
+    setCityRef(c.deliveryCityRef);
+    setCityOpen(false);
+    setAddress('');
+  };
+
+  const handleAddressChange = (value: string) => {
+    setAddress(value);
+    if (!isNovaPoshta || !cityRef) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      const results = await novaPoshtaApi.getWarehouses(cityRef, value).catch(() => []);
+      setWarehouseResults(results.slice(0, 30));
+      setWarehouseOpen(true);
+    }, 300);
+  };
+
+  const handleAddressFocus = async () => {
+    if (!isNovaPoshta || !cityRef) return;
+    setWarehouseOpen(true);
+    if (warehouseResults.length === 0) {
+      const results = await novaPoshtaApi.getWarehouses(cityRef, address).catch(() => []);
+      setWarehouseResults(results.slice(0, 30));
+    }
+  };
+
+  const handleSelectWarehouse = (w: NpWarehouse) => {
+    setAddress(w.description);
+    setWarehouseOpen(false);
+  };
 
   const selectedMethod = deliveryMethods.find((m) => m.id === deliveryMethodId);
   const deliveryPrice = selectedMethod?.price ?? 0;
   const total = goodsTotal + deliveryPrice;
 
+  const validate = () => {
+    const errs: typeof errors = {};
+    if (!firstName.trim()) errs.firstName = "Вкажіть ім'я";
+    if (!lastName.trim()) errs.lastName = 'Вкажіть прізвище';
+    if (!phone.trim()) errs.phone = 'Вкажіть номер телефону';
+    if (needsCity && !city.trim()) errs.city = 'Вкажіть місто';
+    if (needsCity && isNovaPoshta && !cityRef) errs.city = 'Оберіть місто зі списку';
+    if (needsAddress && !address.trim()) {
+      errs.address = isWarehouseCarrier ? 'Вкажіть відділення або поштомат' : 'Вкажіть адресу';
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     onSubmit?.({ firstName, lastName, phone, city, deliveryMethodId, address, comment });
 
     navigate('/payment', {
@@ -56,6 +144,11 @@ export default function Delivery({
         deliveryLabel: selectedMethod
           ? `${selectedMethod.name}${city ? `, ${city}` : ''}`
           : city,
+        firstName,
+        lastName,
+        phone,
+        address,
+        comment,
       },
     });
   };
@@ -99,8 +192,9 @@ export default function Delivery({
                   type="text"
                   placeholder="Ваше ім'я"
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => { setFirstName(e.target.value); setErrors((prev) => ({ ...prev, firstName: undefined })); }}
                 />
+                {errors.firstName && <span className={styles.err}>{errors.firstName}</span>}
               </div>
               <div className={styles.field}>
                 <label htmlFor="lastName">Прізвище</label>
@@ -109,8 +203,9 @@ export default function Delivery({
                   type="text"
                   placeholder="Ваше прізвище"
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => { setLastName(e.target.value); setErrors((prev) => ({ ...prev, lastName: undefined })); }}
                 />
+                {errors.lastName && <span className={styles.err}>{errors.lastName}</span>}
               </div>
             </div>
 
@@ -121,20 +216,35 @@ export default function Delivery({
                 type="tel"
                 placeholder="+380 XX XXX XX XX"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => { setPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: undefined })); }}
               />
+              {errors.phone && <span className={styles.err}>{errors.phone}</span>}
             </div>
 
-            <div className={styles.field}>
-              <label htmlFor="city">Місто</label>
-              <input
-                id="city"
-                type="text"
-                placeholder="Місто"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-            </div>
+            {needsCity && (
+              <div className={styles.field} ref={cityBoxRef} style={{ position: 'relative' }}>
+                <label htmlFor="city">Місто</label>
+                <input
+                  id="city"
+                  type="text"
+                  placeholder={isNovaPoshta ? 'Почніть вводити назву міста...' : 'Місто'}
+                  value={city}
+                  onChange={(e) => { handleCityChange(e.target.value); setErrors((prev) => ({ ...prev, city: undefined })); }}
+                  onFocus={() => cityResults.length > 0 && setCityOpen(true)}
+                  autoComplete="off"
+                />
+                {isNovaPoshta && cityOpen && cityResults.length > 0 && (
+                  <div className={styles.suggestDropdown}>
+                    {cityResults.map((c) => (
+                      <div key={c.ref} className={styles.suggestItem} onClick={() => handleSelectCity(c)}>
+                        {c.name} <span className={styles.suggestMeta}>{c.area}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errors.city && <span className={styles.err}>{errors.city}</span>}
+              </div>
+            )}
 
             <p className={styles.methodsLabel}>Спосіб доставки</p>
             <div className={styles.methods} role="radiogroup" aria-label="Спосіб доставки">
@@ -150,7 +260,12 @@ export default function Delivery({
                       name="deliveryMethod"
                       value={method.id}
                       checked={selected}
-                      onChange={() => setDeliveryMethodId(method.id)}
+                      onChange={() => {
+                        setDeliveryMethodId(method.id);
+                        setCityRef('');
+                        setAddress('');
+                        setErrors((prev) => ({ ...prev, city: undefined, address: undefined }));
+                      }}
                       style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
                     />
                     <span className={styles.radio} aria-hidden="true" />
@@ -165,16 +280,37 @@ export default function Delivery({
               })}
             </div>
 
-            <div className={`${styles.field} ${styles.addressField}`}>
-              <label htmlFor="address">Відділення / Адреса</label>
-              <input
-                id="address"
-                type="text"
-                placeholder="№1 вул. Хрещатик, 1"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </div>
+            {needsAddress && (
+              <div className={`${styles.field} ${styles.addressField}`} ref={addressBoxRef} style={{ position: 'relative' }}>
+                <label htmlFor="address">{addressLabel}</label>
+                <input
+                  id="address"
+                  type="text"
+                  placeholder={
+                    isNovaPoshta
+                      ? (cityRef ? 'Оберіть або знайдіть відділення...' : 'Спочатку оберіть місто зі списку')
+                      : isUkrposhta
+                        ? 'Відділення або поштомат Укрпошти'
+                        : '№1 вул. Хрещатик, 1'
+                  }
+                  value={address}
+                  disabled={isNovaPoshta && !cityRef}
+                  onChange={(e) => { handleAddressChange(e.target.value); setErrors((prev) => ({ ...prev, address: undefined })); }}
+                  onFocus={handleAddressFocus}
+                  autoComplete="off"
+                />
+                {isNovaPoshta && warehouseOpen && warehouseResults.length > 0 && (
+                  <div className={styles.suggestDropdown}>
+                    {warehouseResults.map((w) => (
+                      <div key={w.ref} className={styles.suggestItem} onClick={() => handleSelectWarehouse(w)}>
+                        {w.description}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {errors.address && <span className={styles.err}>{errors.address}</span>}
+              </div>
+            )}
 
             <button type="submit" className={styles.submit}>
               Далі → оплата

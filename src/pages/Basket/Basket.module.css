@@ -173,15 +173,20 @@
 .cartTogether {
   grid-column: 1;
   padding: 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 .cartTogether h2 {
-  margin: 0 0 28px;
+  flex: 1 0 100%;
+  margin: 0 0 8px;
   font-size: 34px;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 .miniCard {
-  width: min(340px, 100%);
+  flex: 1 1 260px;
+  max-width: calc((100% - 40px) / 3);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 22px;
@@ -403,6 +408,10 @@
   }
   .cartTogether {
     padding: 0;
+  }
+  .miniCard {
+    max-width: 100%;
+    flex: 1 1 100%;
   }
   .cartRow,
   .cartBonus {
