@@ -32,11 +32,16 @@ const ERROR_MESSAGES: Record<string, string> = {
   'auth/code-expired': 'Код підтвердження застарів. Надішліть новий.',
   'auth/provider-already-linked': 'Цей номер телефону вже прив\'язаний.',
   'auth/credential-already-in-use': 'Цей номер телефону вже використовується іншим акаунтом.',
+  'auth/account-exists-with-different-credential': 'Цей номер телефону вже прив\'язаний до іншого акаунту.',
 };
 
 export function mapFirebaseError(error: unknown): string {
   const code = (error as { code?: string })?.code ?? '';
-  return ERROR_MESSAGES[code] ?? 'Сталася помилка. Спробуйте ще раз.';
+  if (code && ERROR_MESSAGES[code]) return ERROR_MESSAGES[code];
+  const message = (error as { message?: string })?.message;
+  if (code) return `Сталася помилка (${code}). Спробуйте ще раз.`;
+  if (message) return `Сталася помилка: ${message}`;
+  return 'Сталася помилка. Спробуйте ще раз.';
 }
 
 export async function firebaseRegister(

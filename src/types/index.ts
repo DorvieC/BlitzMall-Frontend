@@ -171,6 +171,25 @@ export interface PaymentNavState {
   deliveryLabel?: string;
   cashback?: number;
   total?: number;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: string;
+  comment?: string;
+}
+
+export interface DeliveryNavState {
+  items?: OrderItem[];
+  itemsCount?: number;
+  goodsTotal?: number;
+  cashback?: number;
+  deliveryPrice?: number;
+  deliveryLabel?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: string;
+  comment?: string;
 }
 
 export interface DeliveryMethod {

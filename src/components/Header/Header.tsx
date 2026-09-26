@@ -101,7 +101,11 @@ export default function Header({ full = true }: HeaderProps) {
             onMouseEnter={() => setHoveredTab(ALL_CATEGORIES.id)}
             onMouseLeave={() => setHoveredTab(null)}
           >
-            <button type="button" className={styles.catAllBtn}>
+            <button
+              type="button"
+              className={styles.catAllBtn}
+              onClick={() => navigate('/categories')}
+            >
               {ALL_CATEGORIES.name}
             </button>
             {hoveredTab === ALL_CATEGORIES.id && (
@@ -117,7 +121,7 @@ export default function Header({ full = true }: HeaderProps) {
                 onMouseEnter={() => setHoveredTab(cat.id)}
                 onMouseLeave={() => setHoveredTab(null)}
               >
-                <span className={styles.catLink} onClick={() => navigate(`/catalog?q=${encodeURIComponent(cat.name)}`)} style={{cursor:'pointer'}}>{cat.name}</span>
+                <span className={styles.catLink} onClick={() => navigate(`/catalog?categoryId=${cat.backendId}`)} style={{cursor:'pointer'}}>{cat.name}</span>
                 {hoveredTab === cat.id && <CategoryDropdown category={cat} />}
               </div>
             ))}

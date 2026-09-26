@@ -130,7 +130,7 @@ export default function HomePage() {
         <div className={styles.sectionWrap}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>Рекомендації для вас</span>
-            <span className={styles.sectionAll}>Дивитись усі →</span>
+            <span className={styles.sectionAll} onClick={() => navigate('/all-products')} style={{ cursor: 'pointer' }}>Дивитись усі →</span>
           </div>
           <div className={styles.featuredGrid}>
 
@@ -194,7 +194,7 @@ export default function HomePage() {
         <div className={styles.sectionWrap}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>Історія переглядів</span>
-            <span className={styles.sectionAll}>Дивитись усі →</span>
+            <span className={styles.sectionAll} onClick={() => navigate('/all-products')} style={{ cursor: 'pointer' }}>Дивитись усі →</span>
           </div>
           <div className={styles.rowCards}>
             {[
@@ -215,7 +215,7 @@ export default function HomePage() {
         <div className={styles.sectionWrap}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>Топ продажів</span>
-            <span className={styles.sectionAll}>Дивитись усі →</span>
+            <span className={styles.sectionAll} onClick={() => navigate('/all-products')} style={{ cursor: 'pointer' }}>Дивитись усі →</span>
           </div>
           <div className={styles.newGrid}>
             {[
@@ -241,7 +241,7 @@ export default function HomePage() {
         <div className={styles.sectionWrap}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionTitle}>Тренди</span>
-            <span className={styles.sectionAll}>Дивитись усі →</span>
+            <span className={styles.sectionAll} onClick={() => navigate('/all-products')} style={{ cursor: 'pointer' }}>Дивитись усі →</span>
           </div>
           <div className={styles.smallCards}>
             {[

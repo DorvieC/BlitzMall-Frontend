@@ -1,5 +1,42 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
 
+.err {
+  color: #d62d2d;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.suggestDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #d9dfd9;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.suggestItem {
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.suggestItem:hover {
+  background: #f3f8f2;
+}
+
+.suggestMeta {
+  color: #8a938a;
+  font-size: 12px;
+}
+
 .checkoutPage {
   --green-900: #1f5e3b;
   --green-700: #2f6b3f;

@@ -50,7 +50,6 @@ export default function Basket({
   onAddToCart,
   onCheckout,
 }: BasketProps) {
-  const [sort, setSort] = useState('popular');
   const [promo, setPromo] = useState('');
   const [useBonuses, setUseBonuses] = useState(false);
 
@@ -72,14 +71,6 @@ export default function Basket({
 
         <div className={styles.cartHead}>
           <h1 className={styles.cartTitle}>Кошик&nbsp; {count} товари</h1>
-          <label className={styles.cartSort}>
-            Сортувати
-            <select value={sort} onChange={(e) => setSort(e.target.value)}>
-              <option value="popular">За популярністю</option>
-              <option value="price-asc">Від дешевих до дорогих</option>
-              <option value="price-desc">Від дорогих до дешевих</option>
-            </select>
-          </label>
         </div>
 
         <div className={styles.cartBody}>
@@ -133,9 +124,13 @@ export default function Basket({
               <button className={styles.cartOutline} onClick={() => onClear?.()}>
                 Очистити кошик
               </button>
-              <a href="/">
-                <button className={styles.cartOutline}>Продовжити покупки</button>
-              </a>
+              <button
+                className={styles.cartOutline}
+                disabled={cartItems.length === 0}
+                onClick={() => onCheckout?.()}
+              >
+                Продовжити покупки
+              </button>
             </div>
           </section>
 
@@ -188,9 +183,10 @@ export default function Basket({
             <p className={styles.cartCashback}>Кешбек за це замовлення: +{cashback} бонусів</p>
           </aside>
 
+          {cartItems.length > 0 && suggestions.length > 0 && (
           <section className={styles.cartTogether}>
             <h2>Купують разом</h2>
-            {suggestions.map((p) => (
+            {suggestions.slice(0, 3).map((p) => (
               <article className={styles.miniCard} key={p.id}>
                 <img className={styles.miniCardImg} src={p.imageUrl} alt={p.name} />
                 <div className={styles.miniCardBody}>
@@ -217,6 +213,7 @@ export default function Basket({
               </article>
             ))}
           </section>
+          )}
         </div>
       </main>
 

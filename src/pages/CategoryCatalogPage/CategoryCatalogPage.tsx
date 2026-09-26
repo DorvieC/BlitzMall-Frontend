@@ -30,6 +30,7 @@ export function CategoryCatalogPage() {
         <div className={styles.breadcrumbs}>Головна / Усі категорії</div>
 
         <h1 className={styles.title}>Каталог категорій</h1>
+        <Link to="/all-products" style={{ display: 'inline-block', marginBottom: 16 }}>Показати всі товари →</Link>
 
         <div className={styles.grid}>
           {CATEGORIES.map((cat) => (
@@ -46,7 +47,7 @@ export function CategoryCatalogPage() {
               <ul className={styles.subList}>
                 {cat.subcategories.map((sub) => (
                   <li key={sub}>
-                    <Link to={`/category/${cat.id}?sub=${encodeURIComponent(sub)}`}>
+                    <Link to={`/catalog?categoryId=${cat.backendId}`}>
                       {sub}
                     </Link>
                   </li>

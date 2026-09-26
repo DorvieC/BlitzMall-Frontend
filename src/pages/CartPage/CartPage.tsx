@@ -40,6 +40,29 @@ export default function CartPage() {
 
   const total = cart?.items?.reduce((s, i) => s + i.unitPrice * i.quantity, 0) ?? 0;
 
+  const goToDelivery = () => {
+    const items = (cart?.items ?? []).map(item => {
+      const product = productMap[item.productId];
+      return {
+        id: String(item.id),
+        name: product?.name ?? `Товар #${item.productId}`,
+        variant: product?.categoryName ?? '',
+        qty: item.quantity,
+        brand: '',
+        price: item.unitPrice,
+        image: product?.imageUrl ?? '',
+      };
+    });
+    navigate('/delivery', {
+      state: {
+        items,
+        itemsCount: itemCount,
+        goodsTotal: total,
+        cashback: 0,
+      },
+    });
+  };
+
   return (
     <div className={styles.page}>
       <Header />
@@ -107,7 +130,7 @@ export default function CartPage() {
                 <span>Сума:</span>
                 <span>{total.toLocaleString('uk-UA')} ₴</span>
               </div>
-              <button className={styles.orderBtn} onClick={() => navigate('/checkout')}>
+              <button className={styles.orderBtn} onClick={goToDelivery}>
                 Оформити замовлення
               </button>
               <Link to="/" className={styles.continueLink}>← Продовжити покупки</Link>

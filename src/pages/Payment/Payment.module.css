@@ -1,5 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
 
+.err {
+  color: #d62d2d;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+
 .checkoutPage {
   --green-900: #1f5e3b;
   --green-700: #2f6b3f;
